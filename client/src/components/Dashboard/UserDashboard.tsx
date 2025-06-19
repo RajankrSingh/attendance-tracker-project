@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLocation } from 'wouter';
+import { mockUsers, mockAttendance } from '../../data/mockData';
 import ClockInOut from '../Attendance/ClockInOutButton';
 import { LogOut } from 'lucide-react';
 
 const UserDashboard: React.FC = () => {
   const [location, setLocation] = useLocation();
-  const [attendance, setAttendance] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   // Get current user from localStorage
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const today = new Date().toISOString().split('T')[0];
@@ -16,25 +15,10 @@ const UserDashboard: React.FC = () => {
     setLocation('/');
   };
 
-  // Fetch today's attendance for the current user
-  const fetchAttendance = async () => {
-    try {
-      const response = await fetch(`/api/attendance?userId=${currentUser.id}`);
-      const records = await response.json();
-      const todayRecord = records.find((r: any) => r.date === today);
-      setAttendance(todayRecord);
-    } catch (error) {
-      console.error('Failed to fetch attendance:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (currentUser.id) {
-      fetchAttendance();
-    }
-  }, [currentUser.id, today]);
+  // Find today's attendance for the current user
+  const attendance = mockAttendance.find(
+    (a) => a.userId === currentUser.id && a.date === today
+  );
 
   if (!currentUser || !currentUser.id) {
     return (

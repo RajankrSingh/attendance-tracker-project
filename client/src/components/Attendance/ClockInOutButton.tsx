@@ -1,102 +1,65 @@
 import React, { useState, useEffect } from 'react';
+import { mockAttendance } from '../../data/mockData';
 
 const ClockInOut: React.FC = () => {
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const today = new Date().toISOString().split('T')[0];
 
-  const [clockInTime, setClockInTime] = useState<string>('');
-  const [clockOutTime, setClockOutTime] = useState<string>('');
-  const [attendanceRecord, setAttendanceRecord] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  // Find today's attendance for the current user
+  const initialAttendance = mockAttendance.find(
+    (a) => a.userId === currentUser.id && a.date === today
+  );
 
-  // Fetch current attendance record
-  const fetchTodayAttendance = async () => {
-    try {
-      const response = await fetch(`/api/attendance?userId=${currentUser.id}`);
-      const records = await response.json();
-      const todayRecord = records.find((r: any) => r.date === today);
-      
-      if (todayRecord) {
-        setAttendanceRecord(todayRecord);
-        setClockInTime(todayRecord.clockIn || '');
-        setClockOutTime(todayRecord.clockOut || '');
+  const [clockInTime, setClockInTime] = useState<string>(initialAttendance?.clockIn || '');
+  const [clockOutTime, setClockOutTime] = useState<string>(initialAttendance?.clockOut || '');
+
+  // Update attendance in localStorage (simulate backend)
+  const updateAttendance = (clockIn?: string, clockOut?: string) => {
+    let updated = false;
+    for (let att of mockAttendance) {
+      if (att.userId === currentUser.id && att.date === today) {
+        if (clockIn) att.clockIn = clockIn;
+        if (clockOut) att.clockOut = clockOut;
+        updated = true;
       }
-    } catch (error) {
-      console.error('Failed to fetch attendance:', error);
     }
+if (!updated) {
+  mockAttendance.push({
+    id: Date.now().toString(), // Convert to string
+    userId: currentUser.id,
+    date: today,
+    status: clockIn ? 'present' : 'absent',
+    clockIn: clockIn || '',
+    clockOut: clockOut || '',
+  });
+}
+    // Optionally, persist to localStorage for demo
+    localStorage.setItem('mockAttendance', JSON.stringify(mockAttendance));
   };
 
   useEffect(() => {
-    if (currentUser.id) {
-      fetchTodayAttendance();
+    // Load from localStorage if available
+    const stored = localStorage.getItem('mockAttendance');
+    if (stored) {
+      const arr = JSON.parse(stored);
+      const att = arr.find((a: any) => a.userId === currentUser.id && a.date === today);
+      if (att) {
+        setClockInTime(att.clockIn || '');
+        setClockOutTime(att.clockOut || '');
+      }
     }
   }, [currentUser.id, today]);
 
-  const handleClockIn = async () => {
-    setLoading(true);
-    const now = new Date().toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-    
-    try {
-      const response = await fetch('/api/attendance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: parseInt(currentUser.id),
-          date: today,
-          clockIn: now,
-          status: 'present'
-        }),
-      });
-
-      if (response.ok) {
-        const newRecord = await response.json();
-        setAttendanceRecord(newRecord);
-        setClockInTime(now);
-      }
-    } catch (error) {
-      console.error('Failed to clock in:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleClockIn = () => {
+    const now = new Date().toLocaleTimeString();
+    setClockInTime(now);
+    updateAttendance(now, undefined);
   };
 
-  const handleClockOut = async () => {
-    setLoading(true);
-    const now = new Date().toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-    
-    try {
-      if (attendanceRecord) {
-        const response = await fetch(`/api/attendance/${attendanceRecord.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            clockOut: now
-          }),
-        });
-
-        if (response.ok) {
-          const updatedRecord = await response.json();
-          setAttendanceRecord(updatedRecord);
-          setClockOutTime(now);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to clock out:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleClockOut = () => {
+    const now = new Date().toLocaleTimeString();
+    setClockOutTime(now);
+    updateAttendance(undefined, now);
   };
 
   return (
@@ -105,47 +68,25 @@ const ClockInOut: React.FC = () => {
       <div className="mb-4">
         <button
           onClick={handleClockIn}
-          className={`px-4 py-2 rounded mr-2 text-white ${
-            clockInTime || loading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-green-500 hover:bg-green-600'
-          }`}
-          disabled={!!clockInTime || loading}
+          className="bg-green-500 text-white px-4 py-2 rounded mr-2"
+          disabled={!!clockInTime}
         >
-          {loading ? 'Processing...' : 'Clock In'}
+          Clock In
         </button>
         <button
           onClick={handleClockOut}
-          className={`px-4 py-2 rounded text-white ${
-            !clockInTime || clockOutTime || loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600'
-          }`}
-          disabled={!clockInTime || !!clockOutTime || loading}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          disabled={!clockInTime || !!clockOutTime}
         >
-          {loading ? 'Processing...' : 'Clock Out'}
+          Clock Out
         </button>
       </div>
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <span className="font-medium">Clock In Time:</span> 
-          <span className={clockInTime ? 'text-green-600 font-semibold' : 'text-gray-500'}>
-            {clockInTime || 'Not clocked in'}
-          </span>
+      <div>
+        <div>
+          <span className="font-medium">Clock In Time:</span> {clockInTime || '-'}
         </div>
-        <div className="flex justify-between">
-          <span className="font-medium">Clock Out Time:</span> 
-          <span className={clockOutTime ? 'text-blue-600 font-semibold' : 'text-gray-500'}>
-            {clockOutTime || 'Not clocked out'}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-medium">Status:</span> 
-          <span className={`font-semibold ${
-            clockOutTime ? 'text-gray-600' : clockInTime ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {clockOutTime ? 'Day Completed' : clockInTime ? 'Working' : 'Not Started'}
-          </span>
+        <div>
+          <span className="font-medium">Clock Out Time:</span> {clockOutTime || '-'}
         </div>
       </div>
     </div>

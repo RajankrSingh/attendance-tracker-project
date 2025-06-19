@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { User } from '../../types/types';
-import { Users, UserCheck, UserX, Clock, LogOut, RefreshCw } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const [location, setLocation] = useLocation();
   const [users, setUsers] = useState<User[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const today = new Date().toISOString().split('T')[0];
 
   const handleLogout = () => {
@@ -16,38 +15,27 @@ const AdminDashboard: React.FC = () => {
     setLocation('/');
   };
 
-  const fetchData = async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    try {
-      const [usersResponse, attendanceResponse] = await Promise.all([
-        fetch('/api/users'),
-        fetch('/api/attendance')
-      ]);
-      
-      const usersData = await usersResponse.json();
-      const attendanceData = await attendanceResponse.json();
-      
-      setUsers(usersData);
-      setAttendanceRecords(attendanceData);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const handleRefresh = () => {
-    fetchData(true);
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [usersResponse, attendanceResponse] = await Promise.all([
+          fetch('/api/users'),
+          fetch('/api/attendance')
+        ]);
+        
+        const usersData = await usersResponse.json();
+        const attendanceData = await attendanceResponse.json();
+        
+        setUsers(usersData);
+        setAttendanceRecords(attendanceData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
-    
-    // Auto-refresh every 30 seconds to show live updates
-    const interval = setInterval(fetchData, 30000);
-    
-    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -72,27 +60,13 @@ const AdminDashboard: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              refreshing 
-                ? 'bg-gray-400 cursor-not-allowed text-white' 
-                : 'bg-blue-500 text-white hover:bg-blue-600'
-            }`}
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing...' : 'Refresh'}
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
-        </div>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </button>
       </div>
       
       {/* Stats Overview */}
@@ -159,28 +133,6 @@ const AdminDashboard: React.FC = () => {
                   const attendance = attendanceRecords.find(
                     (a: any) => a.userId === user.id && a.date === today
                   );
-                  
-                  // Determine status based on clock in/out times
-                  let displayStatus = 'absent';
-                  let statusColor = 'bg-red-100 text-red-800';
-                  
-                  if (attendance) {
-                    if (attendance.clockOut) {
-                      displayStatus = 'completed';
-                      statusColor = 'bg-gray-100 text-gray-800';
-                    } else if (attendance.clockIn) {
-                      displayStatus = 'working';
-                      statusColor = 'bg-green-100 text-green-800';
-                      
-                      // Check if late (after 9:00 AM)
-                      const clockInTime = attendance.clockIn;
-                      if (clockInTime && clockInTime > '09:00') {
-                        displayStatus = 'late';
-                        statusColor = 'bg-yellow-100 text-yellow-800';
-                      }
-                    }
-                  }
-                  
                   return (
                     <tr key={user.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -201,19 +153,18 @@ const AdminDashboard: React.FC = () => {
                         {user.position}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}`}>
-                          {displayStatus}
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                          ${attendance?.status === 'present' ? 'bg-green-100 text-green-800' : 
+                            attendance?.status === 'late' ? 'bg-yellow-100 text-yellow-800' : 
+                            'bg-red-100 text-red-800'}`}>
+                          {attendance?.status || 'absent'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={attendance?.clockIn ? 'text-green-600 font-medium' : 'text-gray-500'}>
-                          {attendance?.clockIn || '-'}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {attendance?.clockIn || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={attendance?.clockOut ? 'text-blue-600 font-medium' : 'text-gray-500'}>
-                          {attendance?.clockOut || '-'}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {attendance?.clockOut || '-'}
                       </td>
                     </tr>
                   );
