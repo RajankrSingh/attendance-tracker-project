@@ -1,13 +1,20 @@
 import React from 'react';
+import { useLocation } from 'wouter';
 import { User } from '../../types/types';
 import { mockUsers } from '../../data/mockData';
-import { Users, UserCheck, UserX, Clock } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
+  const [location, setLocation] = useLocation();
   const today = new Date().toISOString().split('T')[0];
 
   // Always read latest attendance from localStorage
   const attendanceArr = JSON.parse(localStorage.getItem('mockAttendance') || '[]');
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    setLocation('/');
+  };
 
   const totalUsers = mockUsers.length;
   const presentToday = attendanceArr.filter(
@@ -19,7 +26,16 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </button>
+      </div>
       
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

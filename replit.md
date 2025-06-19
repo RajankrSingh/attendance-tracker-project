@@ -8,7 +8,7 @@ This is a full-stack attendance management system built with React, Express, Typ
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Routing**: React Router DOM for client-side navigation
+- **Routing**: Wouter for client-side navigation (migrated from React Router DOM)
 - **Styling**: TailwindCSS with shadcn/ui component library
 - **State Management**: React Context API for global state
 - **Build Tool**: Vite for fast development and optimized builds
@@ -101,6 +101,11 @@ This is a full-stack attendance management system built with React, Express, Typ
 ```
 Changelog:
 - June 19, 2025. Initial setup
+- June 19, 2025. Migrated from Bolt to Replit environment
+  - Migrated routing from React Router DOM to wouter for Replit compatibility
+  - Updated employee data with Indian names and diverse departments
+  - Added logout functionality for both admin and employee dashboards
+  - Fixed missing dependencies and imports
 ```
 
 ## User Preferences
