@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { LogIn } from 'lucide-react';
-import { mockUsers } from '../../data/mockData';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -9,18 +8,28 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [, navigate] = useLocation();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Find user in mock data
-    const user = mockUsers.find(u => u.email === email);
-    
-    if (user) {
-      // For demo purposes, any password works
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      navigate(user.role === 'admin' ? '/admin' : '/dashboard');
-    } else {
-      setError('Invalid email or password');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.user) {
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (error) {
+      setError('Login failed. Please try again.');
     }
   };
 

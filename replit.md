@@ -23,9 +23,10 @@ This is a full-stack attendance management system built with React, Express, Typ
 
 ### Database Schema
 - **ORM**: Drizzle ORM with PostgreSQL dialect
-- **Current Tables**: Users table with basic authentication fields
+- **Tables**: Users, Attendance Records, Leave Requests, Leave Balances with full relations
 - **Schema Location**: `shared/schema.ts` for type sharing between frontend and backend
-- **Migrations**: Located in `./migrations` directory
+- **Database**: PostgreSQL with Neon serverless integration
+- **Migrations**: Managed via `npm run db:push` command
 
 ## Key Components
 
@@ -40,9 +41,10 @@ This is a full-stack attendance management system built with React, Express, Typ
 - **Shared Components**: Reusable UI components for consistency
 
 ### Data Management
-- **Mock Data**: Currently using mock data for development (`mockData.ts`)
-- **Storage Interface**: Abstracted storage layer with in-memory implementation
-- **Planned Migration**: Full database integration using Drizzle ORM
+- **Database Storage**: PostgreSQL with Drizzle ORM integration
+- **Storage Interface**: Abstracted storage layer with database implementation
+- **API Integration**: Full REST API with database persistence
+- **Data Seeding**: Automated seeding with Indian employee data
 
 ### UI/UX Design
 - **Design System**: shadcn/ui components with neutral color scheme
@@ -106,6 +108,12 @@ Changelog:
   - Updated employee data with Indian names and diverse departments
   - Added logout functionality for both admin and employee dashboards
   - Fixed missing dependencies and imports
+- June 19, 2025. Database integration completed
+  - Added PostgreSQL database with Neon serverless integration
+  - Created comprehensive schema with users, attendance, leave requests, and leave balances
+  - Implemented full REST API with database persistence
+  - Updated frontend to use real database data instead of localStorage
+  - Added database seeding with Indian employee data
 ```
 
 ## User Preferences

@@ -1,26 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { User } from '../../types/types';
-import { mockUsers } from '../../data/mockData';
 import { Users, UserCheck, UserX, Clock, LogOut } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const [location, setLocation] = useLocation();
+  const [users, setUsers] = useState<User[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const today = new Date().toISOString().split('T')[0];
-
-  // Always read latest attendance from localStorage
-  const attendanceArr = JSON.parse(localStorage.getItem('mockAttendance') || '[]');
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
     setLocation('/');
   };
 
-  const totalUsers = mockUsers.length;
-  const presentToday = attendanceArr.filter(
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [usersResponse, attendanceResponse] = await Promise.all([
+          fetch('/api/users'),
+          fetch('/api/attendance')
+        ]);
+        
+        const usersData = await usersResponse.json();
+        const attendanceData = await attendanceResponse.json();
+        
+        setUsers(usersData);
+        setAttendanceRecords(attendanceData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const totalUsers = users.length;
+  const presentToday = attendanceRecords.filter(
     (record: any) => record.date === today && record.status === 'present'
   ).length;
-  const lateToday = attendanceArr.filter(
+  const lateToday = attendanceRecords.filter(
     (record: any) => record.date === today && record.status === 'late'
   ).length;
 
@@ -97,8 +129,8 @@ const AdminDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {mockUsers.map((user) => {
-                  const attendance = attendanceArr.find(
+                {users.map((user) => {
+                  const attendance = attendanceRecords.find(
                     (a: any) => a.userId === user.id && a.date === today
                   );
                   return (
@@ -106,7 +138,7 @@ const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
-                            <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
+                            <img className="h-10 w-10 rounded-full" src={user.avatar || ''} alt="" />
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{user.name}</div>
