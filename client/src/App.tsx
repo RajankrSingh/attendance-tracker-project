@@ -1,17 +1,15 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Route, Switch } from 'wouter';
 import Login from './components/Authentication/Login';
 import AdminDashboard from './components/Dashboard/AdminDashboard';
 import UserDashboard from './components/Dashboard/UserDashboard';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/dashboard" element={<UserDashboard />} />
-      </Routes>
-    </BrowserRouter>
+    <Switch>
+      <Route path="/" component={Login} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/dashboard" component={UserDashboard} />
+    </Switch>
   );
 }
 

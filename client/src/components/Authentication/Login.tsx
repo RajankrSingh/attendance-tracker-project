@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { LogIn } from 'lucide-react';
 import { mockUsers } from '../../data/mockData';
 
@@ -7,7 +7,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
